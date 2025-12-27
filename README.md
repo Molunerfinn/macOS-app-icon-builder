@@ -65,3 +65,5 @@ This tool relies on `sips` and `iconutil`, which are built into macOS and are no
 ### What PNG size should I use?
 
 Use a square **1024×1024** PNG (with comfortable padding) for best quality.
+
+If you need a macOS-compliant 1024×1024 source PNG for building app icons, you can generate one using a tool like https://github.com/yc-w-cn/macos-compliant-icon-generator.
