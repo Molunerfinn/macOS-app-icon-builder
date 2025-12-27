@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+	cat <<'EOF'
+Usage:
+	./build-icon <input.png> [output.icns]
+
+Examples:
+	./build-icon PicGo-Logo-1024.png
+	./build-icon ./assets/logo.png MyApp.icns
+
+Notes:
+	- Requires macOS tools: sips + iconutil
+	- Always (re)creates ./icons.iconset/
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+	usage
+	exit 0
+fi
+
+input_png="${1:-}"
+output_icns="${2:-icon.icns}"
+iconset_dir="icons.iconset"
+
+if [[ -z "$input_png" ]]; then
+	echo "Error: missing <input.png>" >&2
+	usage >&2
+	exit 2
+fi
+
+if [[ ! -f "$input_png" ]]; then
+	echo "Error: input file not found: $input_png" >&2
+	exit 2
+fi
+
+if ! command -v sips >/dev/null 2>&1; then
+	echo "Error: sips not found (macOS required)" >&2
+	exit 127
+fi
+
+if ! command -v iconutil >/dev/null 2>&1; then
+	echo "Error: iconutil not found (macOS required)" >&2
+	exit 127
+fi
+
+rm -rf "$iconset_dir"
+mkdir -p "$iconset_dir"
+
+declare -a ICON_SPECS=(
+	"16 16 icon_16x16.png"
+	"32 32 icon_16x16@2x.png"
+	"32 32 icon_32x32.png"
+	"64 64 icon_32x32@2x.png"
+	"64 64 icon_64x64.png"
+	"128 128 icon_64x64@2x.png"
+	"128 128 icon_128x128.png"
+	"256 256 icon_128x128@2x.png"
+	"256 256 icon_256x256.png"
+	"512 512 icon_256x256@2x.png"
+	"512 512 icon_512x512.png"
+	"1024 1024 icon_512x512@2x.png"
+)
+
+for spec in "${ICON_SPECS[@]}"; do
+	read -r width height name <<<"$spec"
+	sips -z "$width" "$height" "$input_png" --out "$iconset_dir/$name" >/dev/null
+done
+
+iconutil -c icns "$iconset_dir" -o "$output_icns"
+
+echo "OK: wrote $output_icns"
